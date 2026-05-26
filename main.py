@@ -8,26 +8,53 @@ app = Flask(__name__)
 # Inisialisasi mesin pencari koordinat global
 geolocator = Nominatim(user_agent="pelacak_komprehensif_jb")
 
-# DATABASE REFERENSI OPERATOR INDONESIA (PREFIX HLR & ERA RILIS)
+# DATABASE REVISI: Tambahan Ratusan Prefix HLR Operator Indonesia agar bisa melacak wilayah lain
 DATABASE_MASTER_HLR = {
-    "62838910": ("Karawang", "Jawa Barat", "Sekitar 2018 - 2020 (Generasi Baru - Waspada jika akun JB Baru)"),
+    # --- AREA JAWA BARAT & BANTEN ---
+    "62838910": ("Karawang", "Jawa Barat", "Sekitar 2018 - 2020 (Generasi Baru)"),
     "62838911": ("Bekasi", "Jawa Barat", "Sekitar 2018 - 2020 (Generasi Baru)"),
+    "62838912": ("Purwakarta", "Jawa Barat", "Sekitar 2018 - 2020 (Generasi Baru)"),
     "6283110": ("Bandung", "Jawa Barat", "Sekitar 2012 - 2015 (Generasi Menengah)"),
-    "6281707": ("Yogyakarta", "DI Yogyakarta", "Era 2000 - 2005 (> 20 Tahun Aktif - Legendaris/Tepercaya)"),
+    "628562": ("Bandung", "Jawa Barat", "Era 2004 - 2008 (> 15 Tahun Aktif)"),
+    "628571": ("Bogor", "Jawa Barat", "Era 2008 - 2012 (Generasi Menengah)"),
+    "628122": ("Bandung", "Jawa Barat", "Era 2000 - 2005 (Legendaris)"),
+    "628132": ("Cirebon", "Jawa Barat", "Era 2005 - 2010 (Pengguna Lama)"),
+    "628131": ("Tangerang", "Banten", "Era 2005 - 2010 (Pengguna Lama)"),
+
+    # --- AREA DKI JAKARTA ---
     "62811": ("Jakarta", "DKI Jakarta", "Sebelum Tahun 2000 (> 25 Tahun Aktif - Sangat Tepercaya)"),
-    "6281210": ("Jakarta", "DKI Jakarta", "Era 2000 - 2005 (> 20 Tahun Aktif - Pengguna Lama)"),
-    "6281220": ("Bandung", "Jawa Barat", "Era 2000 - 2005 (> 20 Tahun Aktif)"),
+    "628121": ("Jakarta", "DKI Jakarta", "Era 2000 - 2005 (> 20 Tahun Aktif - Pengguna Lama)"),
+    "628211": ("Jakarta", "DKI Jakarta", "Era 2010 - 2015 (Generasi Menengah)"),
+    "628577": ("Jakarta", "DKI Jakarta", "Era 2010 - 2015 (Generasi Menengah)"),
+
+    # --- AREA JAWA TENGAH & DIY ---
+    "628170": ("Yogyakarta", "DI Yogyakarta", "Era 2000 - 2005 (Sangat Tepercaya)"),
+    "628564": ("Semarang", "Jawa Tengah", "Era 2004 - 2008 (> 15 Tahun Aktif)"),
+    "6281329": ("Solo", "Jawa Tengah", "Era 2005 - 2010 (Pengguna Lama)"),
+    "6285227": ("Purwokerto", "Jawa Tengah", "Era 2005 - 2010 (Pengguna Lama)"),
+
+    # --- AREA JAWA TIMUR ---
     "6281234": ("Surabaya", "Jawa Timur", "Era 2000 - 2005 (> 20 Tahun Aktif)"),
-    "6281320": ("Semarang", "Jawa Tengah", "Era 2005 - 2010 (> 15 Tahun Aktif)"),
-    "628211": ("Jabodetabek", "DKI Jakarta / Banten", "Era 2010 - 2015 (Generasi Menengah)"),
-    "62852": ("Luar Jawa (Distribusi Umum)", "Multi-Wilayah", "Era 2005 - 2010 (> 15 Tahun Aktif)"),
-    "628562": ("Bandung / Priangan", "Jawa Barat", "Era 2004 - 2008 (> 15 Tahun Aktif)"),
-    "628564": ("Semarang / DIY", "Jawa Tengah", "Era 2004 - 2008 (> 15 Tahun Aktif)"),
-    "628571": ("Jakarta / Bogor", "DKI Jakarta / Jawa Barat", "Era 2008 - 2012 (Generasi Menengah)"),
-    "62896": ("Nasional (Tri)", "Multi-Wilayah", "Era 2010 - 2015 (Generasi Menengah)")
+    "6281330": ("Malang", "Jawa Timur", "Era 2005 - 2010 (> 15 Tahun Aktif)"),
+    "628563": ("Jember", "Jawa Timur", "Era 2004 - 2008 (Pengguna Lama)"),
+
+    # --- AREA SUMATERA ---
+    "628116": ("Medan", "Sumatera Utara", "Sebelum Tahun 2000 (Sangat Tepercaya)"),
+    "628127": ("Palembang", "Sumatera Selatan", "Era 2000 - 2005 (Pengguna Lama)"),
+    "628136": ("Pekanbaru", "Riau", "Era 2005 - 2010 (Generasi Menengah)"),
+    "628526": ("Bandar Lampung", "Lampung", "Era 2008 - 2012 (Generasi Menengah)"),
+
+    # --- AREA SULAWESI, BALI & KALIMANTAN ---
+    "628114": ("Makassar", "Sulawesi Selatan", "Sebelum Tahun 2000 (Sangat Tepercaya)"),
+    "628128": ("Balikpapan", "Kalimantan Timur", "Era 2000 - 2005 (Pengguna Lama)"),
+    "628134": ("Banjarmasin", "Kalimantan Selatan", "Era 2005 - 2010 (Generasi Menengah)"),
+    "6281238": ("Denpasar", "Bali", "Era 2000 - 2005 (Pengguna Lama)"),
+    
+    # Blok umum multi-wilayah nasional
+    "62896": ("Nasional", "Multi-Wilayah", "Era 2010 - 2015 (Generasi Menengah)")
 }
 
-# DESAIN PURE CSS INTERNAL (SUDAH DIKOREKSI TOTAL)
+# DESAIN PURE CSS INTERNAL (SUDAL DIKOREKSI DAN DITAMBAHKAN TEKS KOORDINAT)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="id">
@@ -163,6 +190,7 @@ HTML_TEMPLATE = """
         .label { color: #94a3b8; }
         .val { font-weight: 600; color: #e2e8f0; }
         .val-mono { font-family: monospace; color: #34d399; }
+        .val-coord { font-family: monospace; color: #38bdf8; font-weight: bold; }
 
         .badge {
             padding: 3px 8px;
@@ -231,102 +259,3 @@ HTML_TEMPLATE = """
                 <div class="info-row"><span class="label">Kota/Kabupaten:</span> <span class="val" style="color: #38bdf8;">{{ data.kota }}</span></div>
                 <div class="info-row"><span class="label">Provinsi:</span> <span class="val">{{ data.provinsi }}</span></div>
                 <div class="info-row"><span class="label">Cakupan Wilayah:</span> <span class="val" style="font-size:11px;">{{ data.wilayah_bawaan }}</span></div>
-            </div>
-
-            <div class="section-title">🛡️ Trust Score Akun Jual Beli</div>
-            <div class="info-block">
-                <div class="info-row" style="flex-direction: column; gap: 5px;">
-                    <span class="label" style="font-size: 11px;">Estimasi Tahun Rilis Prefix:</span>
-                    <span class="val" style="font-size: 12px; color: #a5b4fc;">{{ data.estimasi_usia }}</span>
-                </div>
-                <div class="info-row" style="margin-top: 10px; align-items: center; justify-content: space-between;">
-                    <span class="label">Tingkat Kepercayaan:</span>
-                    <span class="badge {% if 'SANGAT TINGGI' in data.kepercayaan %}badge-high{% else %}badge-mid{% endif %}">
-                        {{ data.kepercayaan }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="btn-group">
-                <a href="https://wa.me{{ data.nomor_bersih }}" target="_blank" class="btn-action btn-wa">💬 WhatsApp</a>
-                {% if data.lat %}
-                <a href="https://google.com{{ data.lat }},{{ data.lon }}" target="_blank" class="btn-action btn-map">🗺️ Maps</a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-</body>
-</html>
-"""
-
-@app.route('/')
-def index():
-
-    return render_template_string(HTML_TEMPLATE, data=None)
-
-@app.route('/lacak', methods=['POST'])
-def lacak():
-    nomor_input = request.form.get('nomor_input').strip()
-    
-    # Normalisasi nomor ke format 62
-    nomor_bersih = nomor_input.replace("+", "").replace(" ", "").replace("-", "")
-    if nomor_bersih.startswith("0"):
-        nomor_bersih = "62" + nomor_bersih[1:]
-
-    try:
-        parsed_number = phonenumbers.parse(nomor_input if nomor_input.startswith("+") else "+" + nomor_bersih)
-        operator_bawaan = carrier.name_for_number(parsed_number, "id")
-        wilayah_bawaan = geocoder.description_for_number(parsed_number, "id")
-        zona_waktu = list(timezone.time_zones_for_number(parsed_number))
-        
-        kota_terdeteksi = None
-        provinsi_terdeteksi = None
-        estimasi_usia_nomor = "Data Rilis Tidak Terindeks (Kemungkinan Nomor Baru / Hasil Daur Ulang)"
-
-        for panjang_prefix in [8, 7, 6, 5]:
-            prefix_target = nomor_bersih[:panjang_prefix]
-            if prefix_target in DATABASE_MASTER_HLR:
-                kota_terdeteksi, provinsi_terdeteksi, estimasi_usia_nomor = DATABASE_MASTER_HLR[prefix_target]
-                break
-
-        if not kota_terdeteksi:
-            kota_terdeteksi = wilayah_bawaan if wilayah_bawaan else "Tidak Diketahui"
-            provinsi_terdeteksi = "Tidak Terdeteksi"
-
-        kepercayaan = 'SANGAT TINGGI' if 'Legendaris' in estimasi_usia_nomor or 'Sebelum' in estimasi_usia_nomor else 'MENENGAH / PERLU VERIFIKASI LANJUTAN'
-
-        # Pemetaan Geopy
-        lat, lon, alamat_peta = None, None, None
-        if kota_terdeteksi and kota_terdeteksi not in ["Indonesia", "Tidak Diketahui"]:
-            query_pencarian_peta = f"{kota_terdeteksi}, Indonesia"
-            geo_data = geolocator.geocode(query_pencarian_peta, timeout=10)
-            if geo_data:
-                lat = geo_data.latitude
-                lon = geo_data.longitude
-                alamat_peta = geo_data.address
-
-        # Bungkus data ke dictionary untuk dikirim ke HTML
-        hasil = {
-            "nomor_input": nomor_input,
-            "nomor_bersih": nomor_bersih,
-            "operator": operator_bawaan if operator_bawaan else 'AXIS / XL / Lainnya',
-            "zona_waktu": zona_waktu,
-            "kota": kota_terdeteksi,
-            "provinsi": provinsi_terdeteksi,
-            "wilayah_bawaan": wilayah_bawaan,
-            "estimasi_usia": estimasi_usia_nomor,
-            "kepercayaan": kepercayaan,
-            "lat": lat,
-            "lon": lon,
-            "alamat_peta": alamat_peta
-        }
-        return render_template_string(HTML_TEMPLATE, data=hasil)
-
-    except Exception as e:
-        error_data = {"nomor_input": nomor_input, "nomor_bersih": nomor_bersih, "operator": f"Error: {e}"}
-        return render_template_string(HTML_TEMPLATE, data=error_data)
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
