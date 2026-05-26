@@ -27,71 +27,243 @@ DATABASE_MASTER_HLR = {
     "62896": ("Nasional (Tri)", "Multi-Wilayah", "Era 2010 - 2015 (Generasi Menengah)")
 }
 
-# Desain Antarmuka yang akan muncul di HP Anda
+# DESAIN PURE CSS INTERNAL (SUDAH DIKOREKSI TOTAL)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Sistem Pelacak Jual Beli (JB)</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT CORE V3 - Cloud Tracker</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: #f8f9fa; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
-        input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
-        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .result-box { background: #e9ecef; padding: 15px; margin-top: 20px; border-radius: 8px; font-size: 14px; line-height: 1.6; }
-        .section-title { font-weight: bold; color: #495057; border-bottom: 2px solid #dee2e6; margin-top: 15px; padding-bottom: 3px; }
-        a { color: #007bff; text-decoration: none; font-weight: bold; }
-        a:hover { text-decoration: underline; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 480px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #38bdf8, #a5b4fc, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 11px;
+            color: #94a3b8;
+            margin: 5px 0 0 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(to right, #3b82f6, #6366f1);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        }
+
+        .result-box {
+            margin-top: 25px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #38bdf8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 15px 0 8px 0;
+        }
+
+        .info-block {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .label { color: #94a3b8; }
+        .val { font-weight: 600; color: #e2e8f0; }
+        .val-mono { font-family: monospace; color: #34d399; }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-high { background: rgba(52, 211, 153, 0.1); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+        .badge-mid { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            text-decoration: none;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .btn-wa { background-color: #059669; }
+        .btn-wa:hover { background-color: #10b981; transform: translateY(-2px); }
+        .btn-map { background-color: #334155; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-map:hover { background-color: #475569; transform: translateY(-2px); }
     </style>
 </head>
 <body>
+
     <div class="card">
-        <h2>🔍 OSINT CORE V3</h2>
+        <div class="header">
+            <h1>🔍 K7N CORE V3</h1>
+            <p>Secured Cloud Utility Platform</p>
+        </div>
+
         <form action="/lacak" method="post">
-            <input type="text" name="nomor_input" placeholder="Masukkan Nomor HP Target (Contoh: 083891019471)" required>
-            <button type="submit">JALANKAN PELACAKAN</button>
+            <div class="form-group">
+                <input type="text" name="nomor_input" placeholder="Masukkan Nomor HP (Contoh: 083891019471)" required>
+            </div>
+            <button type="submit">⚡ JALANKAN PELACAKAN MENDALAM</button>
         </form>
 
         {% if data %}
         <div class="result-box">
-            <div class="section-title">1. INFORMASI NOMOR UTAMA</div>
-            <b>Input Nomor HP:</b> {{ data.nomor_input }}<br>
-            <b>Format Standar:</b> +{{ data.nomor_bersih }}<br>
-            <b>Penyedia Layanan:</b> {{ data.operator }}<br>
-            <b>Zona Waktu:</b> {{ data.zona_waktu }}<br>
+            
+            <div class="section-title">📌 Informasi Jaringan (By @K7N)</div>
+            <div class="info-block">
+                <div class="info-row"><span class="label">Input Nomor:</span> <span class="val">{{ data.nomor_input }}</span></div>
+                <div class="info-row"><span class="label">Format Global:</span> <span class="val-mono">+{{ data.nomor_bersih }}</span></div>
+                <div class="info-row"><span class="label">Provider:</span> <span class="val">{{ data.operator }}</span></div>
+            </div>
 
-            <div class="section-title">2. ANALISIS GEOGRAFIS (HLR ASAL KARTU)</div>
-            <b>Kota / Kabupaten:</b> {{ data.kota }}<br>
-            <b>Provinsi:</b> {{ data.provinsi }}<br>
-            <b>Cakupan Wilayah Bawaan:</b> {{ data.wilayah_bawaan }}<br>
+            <div class="section-title">🌐 Analisis Geografis (HLR Asal)</div>
+            <div class="info-block">
+                <div class="info-row"><span class="label">Kota/Kabupaten:</span> <span class="val" style="color: #38bdf8;">{{ data.kota }}</span></div>
+                <div class="info-row"><span class="label">Provinsi:</span> <span class="val">{{ data.provinsi }}</span></div>
+                <div class="info-row"><span class="label">Cakupan Wilayah:</span> <span class="val" style="font-size:11px;">{{ data.wilayah_bawaan }}</span></div>
+            </div>
 
-            <div class="section-title">3. REPUTASI AKUN JUAL BELI (JB)</div>
-            <b>Estimasi Era Rilis:</b> {{ data.estimasi_usia }}<br>
-            <b>Tingkat Kepercayaan:</b> {{ data.kepercayaan }}<br>
+            <div class="section-title">🛡️ Trust Score Akun Jual Beli</div>
+            <div class="info-block">
+                <div class="info-row" style="flex-direction: column; gap: 5px;">
+                    <span class="label" style="font-size: 11px;">Estimasi Tahun Rilis Prefix:</span>
+                    <span class="val" style="font-size: 12px; color: #a5b4fc;">{{ data.estimasi_usia }}</span>
+                </div>
+                <div class="info-row" style="margin-top: 10px; align-items: center; justify-content: space-between;">
+                    <span class="label">Tingkat Kepercayaan:</span>
+                    <span class="badge {% if 'SANGAT TINGGI' in data.kepercayaan %}badge-high{% else %}badge-mid{% endif %}">
+                        {{ data.kepercayaan }}
+                    </span>
+                </div>
+            </div>
 
-            <div class="section-title">4. INTEGRASI LAYANAN CHAT</div>
-            <b>Tautan Cek WA:</b> <a href="https://wa.me{{ data.nomor_bersih }}" target="_blank">Hubungi via WhatsApp</a><br>
-
-            <div class="section-title">5. INTEGRASI PEMETAAN DIGITAL</div>
-            {% if data.lat %}
-            <b>Nama Lokasi Peta:</b> {{ data.alamat_peta }}<br>
-            <b>Koordinat Tengah Kota:</b> {{ data.lat }}, {{ data.lon }}<br>
-            <b>Tautan Peta:</b> <a href="https://google.com{{ data.lat }},{{ data.lon }}" target="_blank">Buka Google Maps</a>
-            {% else %}
-            <i>[-] Server peta gagal memuat koordinat daerah ini.</i>
-            {% endif %}
+            <div class="btn-group">
+                <a href="https://wa.me{{ data.nomor_bersih }}" target="_blank" class="btn-action btn-wa">💬 WhatsApp</a>
+                {% if data.lat %}
+                <a href="https://google.com{{ data.lat }},{{ data.lon }}" target="_blank" class="btn-action btn-map">🗺️ Maps</a>
+                {% endif %}
+            </div>
         </div>
         {% endif %}
     </div>
+
 </body>
 </html>
 """
 
 @app.route('/')
 def index():
+
     return render_template_string(HTML_TEMPLATE, data=None)
 
 @app.route('/lacak', methods=['POST'])
@@ -107,7 +279,7 @@ def lacak():
         parsed_number = phonenumbers.parse(nomor_input if nomor_input.startswith("+") else "+" + nomor_bersih)
         operator_bawaan = carrier.name_for_number(parsed_number, "id")
         wilayah_bawaan = geocoder.description_for_number(parsed_number, "id")
-        zona_waktu = list(timezone.time_zones_for_number(parsed_number))[0]
+        zona_waktu = list(timezone.time_zones_for_number(parsed_number))
         
         kota_terdeteksi = None
         provinsi_terdeteksi = None
