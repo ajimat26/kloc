@@ -3,84 +3,144 @@ import requests
 
 app = Flask(__name__)
 
-# DATABASE SIMULASI: Daftar nomor HP penipu untuk fitur Anti-Scam Bot
+# =======================================================
+# 🔑 KREDENSIAL RESMI CONSOLE GREEN API (SUDAH AKTIF)
+# =======================================================
+ID_INSTANCE = "7107633020"
+API_TOKEN = "a25e578ba41c4a59b87988512df467be5cc5548018a14e9e92"
+
+# DATABASE BLACKLIST: Daftar nomor HP penipu/scammer di komunitas JB
 DATABASE_PENIPU = [
     "081299998888",
-    "085711112222"
+    "085711112222",
+    "089533334444"
 ]
 
-def kirim_pesan_wa(nomor_tujuan, teks_pesan):
-    """
-    Fungsi untuk mengirim pesan balik ke WhatsApp.
-    Di dunia nyata, Anda bisa menghubungkannya ke penyedia gateway WA API gratis/berbayar
-    seperti Fonnte, Woke API, atau mendirikan server local NodeJS (Baileys/Whatsapp-web.js).
-    """
-    # Contoh format penembakan data ke API Gateway WA
-    url_gateway = "https://fonnte.com" 
-    headers = {"Authorization": "TOKEN_FONNTE_RAHASIA_ANDA"}
+def kirim_pesan_greenapi(chat_id, teks_pesan):
+    """Fungsi utama mengirim pesan WhatsApp balik ke target via Green API"""
+    if not chat_id.endswith("@c.us") and not chat_id.endswith("@g.us"):
+        chat_id = f"{chat_id}@c.us"
+        
+    url = f"https://green-api.com{ID_INSTANCE}/sendMessage/{API_TOKEN}"
     payload = {
-        "target": nomor_tujuan,
+        "chatId": chat_id,
         "message": teks_pesan
     }
+    headers = {"Content-Type": "application/json"}
+    
     try:
-        requests.post(url_gateway, data=payload, headers=headers)
+        res = requests.post(url, json=payload, headers=headers).json()
+        print(f"[+] Pesan otomatis sukses terkirim ke: {chat_id}")
     except Exception as e:
-        print(f"[-] Gagal mengirim pesan ke WhatsApp: {e}")
+        print(f"[-] Gangguan koneksi ke server Green API: {e}")
 
-# Endpoint Webhook: Tempat menerima chat masuk dari pengguna WhatsApp secara real-time
-@app.route('/webhook-wa', methods=['POST'])
-def terima_chat_wa():
-    data = request.get_json()
-    
-    # Membaca nomor pengirim dan isi chat pesan dari WhatsApp
-    nomor_pengirim = data.get('sender') # Contoh: 6283891019471
-    pesan_masuk = data.get('message', '').strip().lower()
-    
-    print(f"[*] Chat Masuk dari {nomor_pengirim}: {pesan_masuk}")
-    
-    # ------------------ LOGIKA BALASAN OTOMATIS BOT WA ------------------
-    
-    # Menu Utama
-    if pesan_masuk == "menu" or pesan_masuk == "p":
-        balasan = (
-            "🛡️ *K7N BOT TRANS SECURITY V3* 🛡️\n\n"
-            "Halo! Selamat datang di sistem keamanan transaksi JB. "
-            "Silakan balas dengan mengetik perintah di bawah ini:\n\n"
-            "1. Ketik *!cek [nomor]* -> Untuk cek database penipu\n"
-            "2. Ketik *!rekber* -> Panduan membuat room rekber aman\n"
-            "3. Ketik *!bantuan* -> Hubungi admin utama"
-        )
-        kirim_pesan_wa(nomor_pengirim, balasan)
+# =======================================================
+# 📡 WEBHOOK ENDPOINT: PARSING CMD TANDA SERU (!)
+# =======================================================
+@app.route('/webhook-green', methods=['POST'])
+def webhook_green():
+    try:
+        data = request.get_json()
+        if not data:
+            return "OK", 200
+            
+        type_webhook = data.get('typeWebhook', '')
         
-    # Fitur 1: Cek Database Blacklist Penipu
-    elif pesan_masuk.startswith("!cek "):
-        # Mengambil nomor yang ingin dicek (Contoh: !cek 081299998888)
-        nomor_target = pesan_masuk.replace("!cek ", "").strip()
-        
-        if nomor_target in DATABASE_PENIPU:
-            balasan = (
-                f"❌ *PERINGATAN BAHAYA!*\n\n"
-                f"Nomor *{nomor_target}* TERDAFTAR DI DATABASE PENIPU K7N.\n"
-                f"Status: **DILARANG BERTRANSAKSI / BAN**"
-            )
-        else:
-            balasan = (
-                f"🟢 *STATUS AMAN*\n\n"
-                f"Nomor *{nomor_target}* belum pernah terlaporkan menipu di sistem K7N.\n"
-                f"Tetap gunakan rekber admin resmi untuk transaksi aman."
-            )
-        kirim_pesan_wa(nomor_pengirim, balasan)
-        
-    # Fitur 2: Informasi Rekber
-    elif pesan_masuk == "!rekber":
-        balasan = (
-            "💼 *PROSEDUR REKBER K7N SYSTEM*\n\n"
-            "1. Pembeli melakukan transfer dana ke rekening resmi K7N.\n"
-            "2. Admin melakukan verifikasi dana masuk via sistem mutasi otomatis.\n"
-            "3. Setelah dana aman, Penjual dipersilakan menyerahkan barang/akun.\n"
-            "4. Pembeli mengecek barang. Jika aman, dana dicairkan ke penjual."
-        )
-        kirim_pesan_wa(nomor_pengirim, balasan)
+        # Memastikan event adalah pesan masuk (incomingMessageReceived)
+        if type_webhook == 'incomingMessageReceived':
+            chat_id = data.get('senderData', {}).get('chatId', '')
+            nomor_pengirim = chat_id.replace("@c.us", "").replace("@g.us", "")
+            
+            message_data = data.get('messageData', {})
+            pesan_masuk = ""
+            
+            # Ekstraksi teks aman dari struktur JSON Green API
+            if 'textMessageData' in message_data:
+                pesan_masuk = message_data.get('textMessageData', {}).get('textMessage', '')
+            elif 'extendedTextMessageData' in message_data:
+                pesan_masuk = message_data.get('extendedTextMessageData', {}).get('text', '')
+            
+            pesan_masuk = pesan_masuk.strip()
+            
+            # Abaikan jika pesan kosong (bukan format teks)
+            if not pesan_masuk:
+                return "OK", 200
+                
+            print(f"\n[🔥 CHAT] Dari {nomor_pengirim}: '{pesan_masuk}'")
+            
+            # --- SISTEM PARSING PREFIKS TANDA SERU (!) ---
+            if pesan_masuk.startswith("!"):
+                command = pesan_masuk.lower()
+                
+                # 1. Perintah !menu
+                if command == "!menu":
+                    balasan = (
+                        "🛡️ *K7N SYSTEM AUTOMATION V3* 🛡️\n\n"
+                        "Berikut adalah daftar perintah (CMD) resmi yang bisa digunakan:\n\n"
+                        "👉 *!cek [nomor]* -> Cek status penipu/blacklist\n"
+                        "👉 *!rekber* -> Prosedur rekening bersama aman\n"
+                        "👉 *!rules* -> Aturan dasar grup Jual Beli\n"
+                        "👉 *!info* -> Spesifikasi sistem bot"
+                    )
+                    kirim_pesan_greenapi(chat_id, balasan)
+                    
+                # 2. Perintah !cek [nomor]
+                elif command.startswith("!cek "):
+                    nomor_target = pesan_masuk[5:].strip() # Memotong kata '!cek '
+                    
+                    # Normalisasi format nomor pengetesan
+                    if nomor_target.startswith("+62"): nomor_target = "0" + nomor_target[3:]
+                    if nomor_target.startswith("62"): nomor_target = "0" + nomor_target[2:]
+                    
+                    if nomor_target in DATABASE_PENIPU:
+                        balasan = (
+                            f"❌ *PERINGATAN BAHAYA DETEKSI ARSIP!*\n\n"
+                            f"Nomor HP *{nomor_target}* TERDAFTAR DI DATABASE PENIPU K7N.\n"
+                            f"Status: *SANGAT BERBAHAYA / BLACKLIST.*\n"
+                            f"Batalkan transaksi demi keamanan dana Anda!"
+                        )
+                    else:
+                        balasan = (
+                            f"🟢 *STATUS NOMOR AMAN*\n\n"
+                            f"Nomor *{nomor_target}* bersih dari catatan laporan penipuan K7N.\n"
+                            f"Tetap wajib gunakan Rekber Admin resmi saat bertransaksi."
+                        )
+                    kirim_pesan_greenapi(chat_id, balasan)
+                    
+                # 3. Perintah !rekber
+                elif command == "!rekber":
+                    balasan = (
+                        "💼 *SISTEM PANDUAN REKBER K7N* 🛡️\n\n"
+                        "1. Pembeli transfer dana ke rekening Admin utama.\n"
+                        "2. Admin melakukan pengecekan data mutasi masuk asli secara mandiri.\n"
+                        "3. Penjual menyerahkan data akun/barang setelah dana terkonfirmasi aman.\n"
+                        "4. Pembeli mengamankan data barang, lalu dana dicairkan ke penjual."
+                    )
+                    kirim_pesan_greenapi(chat_id, balasan)
+                    
+                # 4. Perintah !rules
+                elif command == "!rules":
+                    balasan = (
+                        "⚠️ *ATURAN KHUSUS GRUP TRANSAKSI* ⚠️\n\n"
+                        "1. Dilarang bertransaksi direct tanpa perantara Rekber.\n"
+                        "2. Segala bentuk bukti kirim screenshoot wajib diverifikasi lewat data mutasi bank.\n"
+                        "3. Saling menjaga etika berkomunikasi saat proses negosiasi."
+                    )
+                    kirim_pesan_greenapi(chat_id, balasan)
+                    
+                # 5. Perintah !info
+                elif command == "!info":
+                    balasan = (
+                        "💻 *SPESIFIKASI CORE BOT SYSTEM*\n\n"
+                        "• Engine Base : Python 3.12 (Flask Framework)\n"
+                        "• Cloud Core  : GitHub Server Infrastructure\n"
+                        "• Webhook App : Green API Cloud Gateway\n"
+                        "• Status Code : 🟢 Active / Run Integration"
+                    )
+                    kirim_pesan_greenapi(chat_id, balasan)
+                    
+    except Exception as e:
+        print(f"[⚠️ ERROR WEBHOOK]: {e}")
         
     return "OK", 200
 
