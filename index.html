@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K7N STORE PRO</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+        .header { padding: 15px; text-align: center; background: #4f46e5; font-weight: bold; color: white; position: relative; }
+        .btn-logout { position: absolute; right: 15px; top: 12px; background: #ef4444; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; border: none; color: white; }
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .card { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 10px; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: none; box-sizing: border-box; background: #334155; color: white; }
+        input::placeholder { color: #94a3b8; }
+        button { width: 100%; padding: 10px; border: none; border-radius: 8px; background: #4f46e5; color: white; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        button:hover { background: #4338ca; }
+        .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .menu div { background: #1e293b; padding: 20px; text-align: center; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .menu div:hover { background: #334155; }
+        .struk { background: white; color: black; padding: 10px; border-radius: 10px; font-family: monospace; margin-top: 10px; }
+        .link-register { display: block; text-align: center; margin-top: 15px; color: #38bdf8; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        K7N STORE
+        <button id="logoutBtn" class="btn-logout" onclick="logout()" style="display:none;">Keluar</button>
+    </div>
+    
+    <div class="container" id="app"></div>
+
+<script>
+const app = document.getElementById("app");
+
+// Ambil data dari localStorage
+let db = JSON.parse(localStorage.getItem("k7n_transaksi")) || [];
+let users = JSON.parse(localStorage.getItem("k7n_users")) || [];
+let currentAdmin = localStorage.getItem("k7n_session") || null;
+
+const WEBHOOK_STRUK = "https://discord.com";
+
+function saveTransaksi() {
+    localStorage.setItem("k7n_transaksi", JSON.stringify(db));
+}
+
+function formatRp(v) {
+    return "Rp " + Number(v).toLocaleString("id-ID");
+}
+
+/* ================= DISCORD STRUK ================= */
+async function sendStruk(x) {
+    try {
+        await fetch(WEBHOOK_STRUK, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                embeds: [{
+                    title: "🧾 STRUK TRANSAKSI K7N STORE",
+                    color: 5763719,
+                    fields: [
+                        { name: "ID Transaksi", value: x.id, inline: true },
+                        { name: "Pelanggan", value: x.nama, inline: true },
+                        { name: "Produk", value: x.produk, inline: true },
+                        { name: "Harga", value: formatRp(x.harga), inline: true },
+                        { name: "Status", value: x.status, inline: true },
+                        { name: "Admin Pengirim", value: x.admin, inline: false },
+                        { name: "Waktu", value: new Date(x.tanggal).toLocaleString("id-ID"), inline: false }
+                    ],
+                    footer: { text: "K7N STORE SYSTEM" }
+                }]
+            })
+        });
+    } catch (e) {
+        console.error("Gagal mengirim struk ke Discord", e);
+    }
+}
+
+/* ================= SISTEM AUTHENTICATION ================= */
+function checkAuth() {
+    if (!currentAdmin) {
+        showLogin();
+        document.getElementById("logoutBtn").style.display = "none";
+    } else {
+        dashboard();
+        document.getElementById("logoutBtn").style.display = "block";
+    }
+}
+
+function showLogin() {
+    app.innerHTML = `
+        <div class="card">
+            <h3 style="text-align:center; margin-top:0;">LOGIN ADMIN</h3>
+            <input type="text" id="loginUser" placeholder="Username / Nama Akun">
+            <input type="password" id="loginPass" placeholder="Kata Sandi">
+            <button onclick="prosesLogin()">Masuk</button>
+            <a href="https://ajimat26.github.io/NVRZ/" target="_blank" class="link-register">Belum punya akun? Buat di sini</a>
+        </div>
+    `;
+}
+
+function prosesLogin() {
+    const userIn = document.getElementById("loginUser").value.trim();
+    const passIn = document.getElementById("loginPass").value;
+
+    if(!userIn || !passIn) {
+        alert("Semua kolom harus diisi!");
+        return;
+    }
+
+    // Simulasi penemuan akun lokal (Jika belum ada di localstorage, otomatis daftarkan akun pertama demi kemudahan)
+    let userValid = users.find(u => u.username.toLowerCase() === userIn.toLowerCase() && u.password === passIn);
+
+    if (userValid) {
+        currentAdmin = userValid.username;
+        localStorage.setItem("k7n_session", currentAdmin);
+        checkAuth();
+    } else {
+        // Fallback pendaftaran otomatis untuk simulasi lingkungan github pages jika database kosong
+        // Namun tetap disarankan membuat akun di web registrasi eksternal
+        alert("Akun tidak ditemukan atau sandi salah! Pastikan Anda sudah membuat akun di sistem.");
+    }
+}
+
+function logout() {
+    localStorage.removeItem("k7n_session");
+    currentAdmin = null;
+    checkAuth();
+}
+
+/* ================= DASHBOARD ================= */
+function dashboard() {
+    let total = 0;
+    db.forEach(x => {
+        if (x.status === "SUKSES") total += Number(x.harga);
+    });
+
+    app.innerHTML = `
+        <div class="card">
+            <h3 style="margin-top:0; color:#38bdf8;">Halo, Admin: ${currentAdmin} 👋</h3>
+            <p>💰 Total Sukses: <b>${formatRp(total)}</b></p>
+            <p>📦 Total Transaksi: <b>${db.length} data</b></p>
+        </div>
+        <div class="menu">
+            <div onclick="formTransaksi()">📦 Buat Transaksi</div>
+            <div onclick="riwayatTransaksi()">📊 Riwayat</div>
+        </div>
+    `;
+}
+
+/* ================= FORM TRANSAKSI ================= */
+function formTransaksi() {
+    app.innerHTML = `
+        <div class="card">
+            <button onclick="dashboard()">⬅ Kembali</button>
+            <h3>Tambah Transaksi</h3>
+            <input id="nama" placeholder="Nama Pelanggan">
+            <input id="produk" placeholder="Nama Produk">
+            <input id="harga" type="number" placeholder="Harga (Angka saja)">
+            <select id="status">
+                <option value="SUKSES">SUKSES</option>
+                <option value="PENDING">PENDING</option>
+                <option value="PROSES">PROSES</option>
+                <option value="GAGAL">GAGAL</option>
+            </select>
+            <button onclick="buatTransaksi()">Simpan & Kirim Struk</button>
+            <div id="hasil"></div>
+        </div>
+    `;
+}
+
+/* ================= PROSES SIMPAN TRANSAKSI ================= */
+window.buatTransaksi = function() {
+    const namaInput = document.getElementById("nama").value;
+    const produkInput = document.getElementById("produk").value;
+    const hargaInput = document.getElementById("harga").value;
+    const statusInput = document.getElementById("status").value;
+
+    if(!namaInput || !produkInput || !hargaInput) {
+        alert("Mohon lengkapi semua data!");
+        return;
+    }
+
+    let obj = {
+        id: "K7N-" + Math.random().toString(36).slice(2, 7).toUpperCase(),
+        nama: namaInput,
+        produk: produkInput,
+        harga: hargaInput,
+        status: statusInput || "PENDING",
+        admin: currentAdmin, // Menyimpan nama akun admin aktif
+        tanggal: new Date().toISOString()
+    };
+
+    db.push(obj);
+    saveTransaksi();
+    sendStruk(obj);
+
+    document.getElementById("hasil").innerHTML = `
+        <div class="struk">
+            <b>STRUK BERHASIL DIKIRIM</b><br><br>
+            ID: ${obj.id}<br>
+            Pelanggan: ${obj.nama}<br>
+            Produk: ${obj.produk}<br>
+            Harga: ${formatRp(obj.harga)}<br>
+            Status: ${obj.status}<br>
+            Admin: ${obj.admin}
+        </div>
+    `;
+};
+
+/* ================= RIWAYAT TRANSAKSI ================= */
+function riwayatTransaksi() {
+    let html = `<button onclick="dashboard()" style="margin-bottom:15px;">⬅ Kembali</button>`;
+    
+    if(db.length === 0) {
+        html += `<div class="card"><p style="text-align:center;">Belum ada riwayat transaksi.</p></div>`;
+    }
+
+    db.slice().reverse().forEach((x, i) => {
+        // Index asli karena di-reverse
+        let indexAsli = db.length - 1 - i; 
+        html += `
+            <div class="card">
+                <b>${x.id}</b> — <span style="font-size:12px; color:#94a3b8;">Admin: ${x.admin || 'System'}</span><br>
+                ${x.nama} - ${x.produk}<br>
+                ${formatRp(x.harga)} | <mark style="background:#334155; color:white; padding:2px 5px; border-radius:4px;">${x.status}</mark><br>
+                <button onclick="editTransaksi(${indexAsli})" style="width:48%; display:inline-block; margin-top:10px;">Edit</button>
+                <button onclick="hapusTransaksi(${indexAsli})" style="width:48%; display:inline-block; margin-top:10px; background:#ef4444;">Hapus</button>
+            </div>
+        `;
+    });
+    app.innerHTML = html;
+}
+
+window.editTransaksi = function(i) {
+    let x = db[i];
+    let nama = prompt("Nama Pelanggan", x.nama);
+    let produk = prompt("Produk", x.produk);
+    let harga = prompt("Harga", x.harga);
+    let status = prompt("Status (SUKSES/PENDING/PROSES/GAGAL)", x.status);
+    
+    if(nama && produk && harga && status) {
+        db[i] = { ...x, nama, produk, harga, status: status.toUpperCase() };
+        saveTransaksi();
+        riwayatTransaksi();
+    }
+}
+
